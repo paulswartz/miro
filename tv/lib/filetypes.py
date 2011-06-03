@@ -94,7 +94,8 @@ def is_allowed_mimetype(mimetype):
     return (mimetype in MIMETYPES_EXT_MAP.keys())
 
 def is_download_mimetype(mimetype):
-    return mimetype in ('application/vnd.emusic-emusic_list',)
+    return mimetype in ('application/vnd.emusic-emusic_list',
+                        'audio/x-amzxml')
 
 def is_allowed_filename(filename):
     """

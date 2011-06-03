@@ -282,9 +282,8 @@ class Browser(widgetset.Browser):
 
     def do_download_finished(self, url):
         logging.debug('finished downloading %s', url)
-        if url.endswith('.emx'):
-            self.emit('download-started')
-            messages.DownloadURL(url, self.unknown_callback).send_to_backend()
+        self.emit('download-started')
+        messages.DownloadURL(url, self.unknown_callback).send_to_backend()
 
 class BrowserNav(widgetset.VBox):
     def __init__(self, guide_info):
