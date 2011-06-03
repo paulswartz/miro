@@ -65,8 +65,8 @@ def is_amazon_content_type(content_type):
     """
     Returns True if this is a content type from Amazon.
     """
-    return content_type in ('audio/x-amzxml',
-                            'audio/x-mpegurl')
+    return content_type.startswith(('audio/x-amzxml',
+                                    'audio/x-mpegurl'))
 
 def download_file(url, handle_unknown_callback):
     """
@@ -92,9 +92,9 @@ def _amazon_callback(data, unknown):
         unknown()
         return
 
-    if data['content-type'] == 'audio/x-amzxml': # .amz file:
+    if data['content-type'].startswith('audio/x-amzxml'): # .amz file:
         _amz_callback(data)
-    elif data['content-type'] == 'audio/x-mpegurl': # .m3u file:
+    elif data['content-type'].startswith('audio/x-mpegurl'): # .m3u file:
         _m3u_callback(data)
 
 def _amz_callback(data):
