@@ -108,9 +108,12 @@ class BrowserWidget(embeddingwidget.EmbeddingWidget):
         gobject.idle_add(change_focus)
 
     def on_uri_load(self, uri):
-        rv = wrappermap.wrapper(self).should_load_url(uri)
-        if rv:
-            wrappermap.wrapper(self).url = uri
+        if wrappermap.wrapper(self).should_download_url(uri):
+            rv = 2
+        else:
+            rv = wrappermap.wrapper(self).should_load_url(uri)
+            if rv:
+                wrappermap.wrapper(self).url = uri
         return rv
 
     def on_net_start(self):
