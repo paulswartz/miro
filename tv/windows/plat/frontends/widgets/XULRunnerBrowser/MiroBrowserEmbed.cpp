@@ -39,9 +39,13 @@
 #include <Python.h>
 #include "nsCOMPtr.h"
 #include "nsComponentManagerUtils.h"
+#include "nsCWebBrowserPersist.h"
 #include "nsEmbedCID.h"
 #include "nsIDOMWindow.h"
+#include "nsIDirectoryService.h"
 #include "nsIInterfaceRequestorUtils.h"
+#include "nsIFile.h"
+#include "nsIProperties.h"
 #include "nsISupportsImpl.h"
 #include "nsIWebBrowser.h"
 #include "nsIWebBrowserFocus.h"
@@ -50,6 +54,7 @@
 #include "nsIWebNavigationInfo.h"
 #include "nsIURI.h"
 #include "nsServiceManagerUtils.h"
+#include "nsXPCOMCID.h"
 
 #include "MiroBrowserEmbed.h"
 #include "xulrunnerbrowser.h"
@@ -474,6 +479,7 @@ NS_IMETHODIMP MiroBrowserEmbed::GetSiteWindow(void * *aSiteWindow)
 NS_IMETHODIMP MiroBrowserEmbed::OnStartURIOpen(nsIURI *aURI, PRBool *_retval)
 {
     nsresult rv;
+    int should_load;
     nsCAutoString specString;
     *_retval = PR_FALSE;
 
@@ -484,9 +490,38 @@ NS_IMETHODIMP MiroBrowserEmbed::OnStartURIOpen(nsIURI *aURI, PRBool *_retval)
     // continue the load.  However, it seems like the opposite is actually the
     // case.
     if(mURICallback && is_enabled()) {
-        if(mURICallback((char*)specString.get(), mURICallbackData) == 0) {
-            *_retval = PR_TRUE;
-        }
+      should_load = mURICallback((char*)specString.get(), mURICallbackData);
+      if(should_load == 0) {
+	mURICallback("http://cancelload", mURICallbackData);
+	*_retval = PR_TRUE;
+      } else if (should_load == 1) {
+	mURICallback("http://continueload", mURICallbackData);
+      } else if (should_load == 2) { // download
+	*_retval = PR_TRUE;
+	mURICallback("http://downloading", mURICallbackData);
+	nsCOMPtr<nsIWebBrowserPersist> persist(do_CreateInstance(NS_WEBBROWSERPERSIST_CONTRACTID, &rv));
+	mURICallback("http://madepersist", mURICallbackData);
+	nsCOMPtr<nsIProperties> directory_service(do_GetService(NS_DIRECTORY_SERVICE_CONTRACTID));
+	if (!directory_service) {
+	  return NS_ERROR_FAILURE;
+	}
+	mURICallback("http://madedirectoryservice", mURICallbackData);
+	nsCOMPtr<nsIFile> file;
+	directory_service->Get("TmpD", NS_GET_IID(nsIFile), getter_AddRefs(file));
+	mURICallback("http://tmpd", mURICallbackData);
+	if (file) {
+	  file->Append(NS_LITERAL_STRING("miro-temporary-download"));
+	  mURICallback("http://append", mURICallbackData);
+	  file->CreateUnique(0, 0600);
+	  mURICallback("http://unique", mURICallbackData);
+	  persist->SetProgressListener(this);
+	  mURICallback("http://progress", mURICallbackData);
+	  persist->SaveURI(aURI, nsnull, nsnull, nsnull, "", file);
+	  mURICallback("http://saved", mURICallbackData);
+	} else {
+	  mURICallback("http://couldnotmakefile", mURICallbackData);
+	}
+      }
     }
     return NS_OK;
 }

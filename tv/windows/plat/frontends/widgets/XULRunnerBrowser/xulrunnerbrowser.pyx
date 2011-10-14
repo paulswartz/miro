@@ -38,6 +38,7 @@ cdef extern from "Python.h":
     PyObject* PyObject_CallMethod(PyObject *o, char* name, char* format, ...)
     PyObject* PyObject_CallFunction(PyObject *o, char* format, ...)
     int PyObject_IsTrue(PyObject *o)
+    long PyInt_AsLong(PyObject *o)
     void Py_DECREF(PyObject*)
     void Py_INCREF(PyObject*)
     object PyString_FromString(char *)
@@ -183,7 +184,7 @@ cdef int uriCallbackGlue(char *uri, void* data) with gil:
     should_load = PyObject_CallMethod(<PyObject*>data,
             "on_uri_load", "s", uri)
     if should_load:
-        retval = PyObject_IsTrue(should_load)
+        retval = PyInt_AsLong(should_load);
         Py_DECREF(should_load)
     return retval
 
